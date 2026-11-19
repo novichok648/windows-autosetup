@@ -1,0 +1,9 @@
+{
+  "User": "a",
+  "TimeZone": "Russian Standard Time",
+  "Reboot": false,
+  "Startup": true,
+  "Dev": [],
+  "Packages": [],
+  "NodeTools": []
+}

@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>WindowsAutoSetup</AssemblyName>
+    <Version>1.0.0-preview.1</Version>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="WindowsAutoSetup.Tests" />
+    <EmbeddedResource Include="../../deployment/DiskSafety.psm1" LogicalName="DiskSafety" />
+    <EmbeddedResource Include="../../deployment/Inventory.ps1" LogicalName="Inventory" />
+    <EmbeddedResource Include="../../deployment/Worker.ps1" LogicalName="Worker" />
+    <EmbeddedResource Include="../../deployment/UserTools.ps1" LogicalName="UserTools" />
+  </ItemGroup>
+</Project>
