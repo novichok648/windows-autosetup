@@ -7,6 +7,20 @@ function Invoke-Native([string]$File, [string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "$File returned $LASTEXITCODE." }
 }
 
+function Resolve-DeploymentDisk($Expected, [object[]]$Disks) {
+    $null = Resolve-TargetDisk $Expected @($Expected)
+    $related = @($Disks | Where-Object {
+        $_.Guid -eq $Expected.Guid -or $_.Serial -eq $Expected.Serial -or $_.UniqueId -eq $Expected.UniqueId
+    })
+    if ($related.Count -ne 1) { throw 'Missing or ambiguous disk identity.' }
+    $actual = $related[0]
+    foreach ($property in 'Serial','UniqueId','Model','Size','Bus','Style') {
+        if ($actual.$property -ne $Expected.$property) { throw "Target disk mismatch ($property)." }
+    }
+    return (Resolve-TargetDisk $actual $Disks)
+}
+
+
 function Read-DeploymentPlan([string]$Root) {
     $path = Join-Path $Root 'deployment-plan.json'
     if ((Get-Item -LiteralPath $path).Length -gt 2MB) { throw 'Plan too large.' }
@@ -103,7 +117,7 @@ try {
     $source = $media[0].DeviceID + '\'
     $plan = Read-DeploymentPlan $source
     Assert-Media $source $plan
-    $expected = Resolve-TargetDisk $plan.Target @(Get-LiveDiskIdentities)
+    $expected = Resolve-DeploymentDisk $plan.Target @(Get-LiveDiskIdentities)
     Assert-LabDisk $expected
     foreach ($letter in 'S','W','R') {
         if (Get-PSDrive -Name $letter -ErrorAction SilentlyContinue) { throw 'Reserved drive letter already in use.' }
@@ -115,12 +129,12 @@ try {
     if ((Read-Host "Type ERASE $($expected.Guid) to erase this virtual disk") -cne "ERASE $($expected.Guid)") {
         throw 'Erase confirmation declined.'
     }
-    $target = Resolve-TargetDisk $plan.Target @(Get-LiveDiskIdentities)
+    $target = Resolve-TargetDisk $expected @(Get-LiveDiskIdentities)
     Assert-LabDisk $target
     $live = Get-Disk -Number $target.Number
     if ($live.IsBoot -or $live.IsSystem -or $live.IsOffline -or $live.IsReadOnly) { throw 'Target disk is not writable.' }
     $checked = Get-DiskIdentity $live
-    $null = Resolve-TargetDisk $plan.Target @($checked)
+    $null = Resolve-TargetDisk $expected @($checked)
     $diskpart = Join-Path $env:TEMP 'autosetup-layout.txt'
     @"
 select disk $($checked.Number)
