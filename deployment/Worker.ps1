@@ -212,8 +212,11 @@ function Set-UserSettings([bool]$Apply) {
     $theme = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize'
     Set-Value $theme AppsUseLightTheme 0 DWord $Apply
     Set-Value $theme SystemUsesLightTheme 0 DWord $Apply
-    Set-Value 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' TaskbarAl 0 DWord $Apply
-    Set-Value 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced' ShowTaskViewButton 0 DWord $Apply
+    $explorer = 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+    Set-Value $explorer HideFileExt 0 DWord $Apply
+    Set-Value $explorer Hidden 1 DWord $Apply
+    Set-Value $explorer TaskbarAl 0 DWord $Apply
+    Set-Value $explorer ShowTaskViewButton 0 DWord $Apply
     Set-Value 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Search' SearchboxTaskbarMode 1 DWord $Apply
     Set-Value 'HKCU:\Software\Microsoft\Windows\CurrentVersion\AdvertisingInfo' Enabled 0 DWord $Apply
     Set-Value 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Privacy' TailoredExperiencesWithDiagnosticDataEnabled 0 DWord $Apply
@@ -233,7 +236,9 @@ function Set-UserSettings([bool]$Apply) {
         Set-Culture 'ru-RU'
         Set-TimeZone -Id $profile.TimeZone
     }
-    if (((Get-WinUserLanguageList).LanguageTag -join ',') -ne 'en-US,ru-RU' -or
+    $languages = Get-WinUserLanguageList
+    if ($languages.Count -ne 2 -or $languages[0].LanguageTag -ne 'en-US' -or
+        $languages[1].LanguageTag -notin 'ru','ru-RU' -or
         (Get-TimeZone).Id -ne $profile.TimeZone -or
         (Get-ItemPropertyValue 'HKCU:\Control Panel\International' LocaleName) -ne 'ru-RU') { throw 'Locale verification failed.' }
     $power = Join-Path ([Environment]::SystemDirectory) 'powercfg.exe'
